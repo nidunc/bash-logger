@@ -143,6 +143,7 @@ LOG_STDERR_LEVEL=$LOG_LEVEL_ERROR
 # Format variables:
 #   %d = date and time (YYYY-MM-DD HH:MM:SS)
 #   %z = timezone (UTC or LOCAL)
+#   %i = date and time in ISO 8601 format, with millisecond precision and timezone offset
 #   %l = log level name (DEBUG, INFO, WARN, ERROR)
 #   %s = script name
 #   %m = message
@@ -401,7 +402,7 @@ _validate_config_format() {
     local line_num="$2"
 
     # Check for control characters (except standard format specifiers)
-    # Allow normal format variables like %d, %l, %s, %m, %z
+    # Allow normal format variables like %d, %l, %s, %m, %z, %i
     local clean_format="$format"
     # Remove valid format specifiers
     clean_format="${clean_format//\%d/}"
@@ -409,6 +410,7 @@ _validate_config_format() {
     clean_format="${clean_format//\%s/}"
     clean_format="${clean_format//\%m/}"
     clean_format="${clean_format//\%z/}"
+    clean_format="${clean_format//\%i/}"
 
     # Check remaining string for control characters (excluding valid format specifiers)
     if ! _validate_string "$clean_format" "$CONFIG_MAX_VALUE_LENGTH" "configuration format at line $line_num" "true" "true" >/dev/null 2>&1; then
@@ -1103,12 +1105,15 @@ _format_log_message() {
     # Get timestamp in appropriate timezone
     local current_date
     local timezone_str
+    local iso_date
     if [[ "$USE_UTC" == "true" ]]; then
         current_date=$(date -u '+%Y-%m-%d %H:%M:%S')  # UTC time
         timezone_str="UTC"
+        iso_date=$(date -u '+%Y-%m-%dT%H:%M:%S.%3NZ') # UTC date and time in ISO 8601 format, with millisecond precision
     else
         current_date=$(date '+%Y-%m-%d %H:%M:%S')     # Local time
         timezone_str="LOCAL"
+        iso_date=$(date '+%Y-%m-%dT%H:%M:%S.%3N%:z')  # Local date and time in ISO 8601 format, with millisecond precision and timezone offset
     fi
 
     # Replace format variables - zsh compatible method
@@ -1121,6 +1126,7 @@ _format_log_message() {
         formatted_message=${formatted_message:gs/%s/${SCRIPT_NAME:-unknown}}
         formatted_message=${formatted_message:gs/%m/$message}
         formatted_message=${formatted_message:gs/%z/$timezone_str}
+        formatted_message=${formatted_message:gs/%i/$iso_date}
     else
         # Bash version
         formatted_message="${formatted_message//%d/$current_date}"
@@ -1128,6 +1134,7 @@ _format_log_message() {
         formatted_message="${formatted_message//%s/${SCRIPT_NAME:-unknown}}"
         formatted_message="${formatted_message//%m/$message}"
         formatted_message="${formatted_message//%z/$timezone_str}"
+        formatted_message="${formatted_message//%i/$iso_date}"
     fi
 
     echo "$formatted_message"
