@@ -1109,11 +1109,11 @@ _format_log_message() {
     if [[ "$USE_UTC" == "true" ]]; then
         current_date=$(date -u '+%Y-%m-%d %H:%M:%S')  # UTC time
         timezone_str="UTC"
-        iso_date=$(date -u '+%Y-%m-%dT%H:%M:%S.%3NZ') # UTC date and time in ISO 8601 format, with millisecond precision
+        iso_date=$(date -u '+%Y-%m-%dT%H:%M:%S.%9NZ') # UTC date and time in ISO 8601 format, with millisecond precision
     else
         current_date=$(date '+%Y-%m-%d %H:%M:%S')     # Local time
         timezone_str="LOCAL"
-        iso_date=$(date '+%Y-%m-%dT%H:%M:%S.%3N%:z')  # Local date and time in ISO 8601 format, with millisecond precision and timezone offset
+        iso_date=$(date '+%Y-%m-%dT%H:%M:%S.%9N%:z')  # Local date and time in ISO 8601 format, with millisecond precision and timezone offset
     fi
 
     # Replace format variables - zsh compatible method
